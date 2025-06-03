@@ -1,0 +1,288 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
+  "basics": {
+    "name": "Alexander Weimer",
+    "label": "Student at Minnetonka High School",
+    "image": "",
+    "email": "aw@a0.ax",
+    "phone": "+1 (612) 743 0320",
+    "url": "github.com/a0a7",
+    "summary": "Student at Minnetonka High School",
+    "location": {
+      "countryCode": "US",
+      "address": "United States"
+    },
+    "profiles": [
+      {
+        "network": "LinkedIn",
+        "username": "alexander-weimer",
+        "url": "https://www.linkedin.com/in/alexander-weimer/"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "Minnetonka Research",
+      "position": "Independent Research Lead",
+      "startDate": "2024-09-30",
+      "endDate": "2025-06-30",
+      "highlights": [],
+      "summary": "Led a yearlong project investigating an error-corrected deep learning approach to handwritten text recognition of Gregg shorthand.",
+      "url": "https://www.linkedin.com/company/65436954",
+      "location": "Greater Minneapolis-St. Paul Area"
+    },
+    {
+      "name": "KTH Royal Institute of Technology",
+      "position": "Research Mentee",
+      "startDate": "2023-06-30",
+      "endDate": "2023-07-31",
+      "highlights": [],
+      "summary": "Under the mentorship of Dr. Antonio Capezza, conducted independent Materials Engineering research investigating the effects of inclusion of biochar as an additive in protein-based absorbent polymers. Presented at the Swedish National Museum of Science and Technology.",
+      "url": "https://www.linkedin.com/company/4814",
+      "location": "Stockholm, Sweden"
+    }
+  ],
+  "volunteer": [
+    {
+      "organization": "Minnetonka Community Education",
+      "position": "Camp Lecturer, Counselor",
+      "startDate": "2022-06-30",
+      "endDate": "2025-03-31",
+      "summary": "Taught and judged spring & summer middle school speech & debate camps. Counselor at kids science camp.",
+      "highlights": [],
+      "url": "https://www.linkedin.com/company/107129508"
+    }
+  ],
+  "education": [
+    {
+      "institution": "Minnetonka Senior High School",
+      "area": "",
+      "studyType": "",
+      "startDate": "2021-09-30",
+      "endDate": "2025-06-30",
+      "score": "",
+      "courses": []
+    },
+    {
+      "institution": "Normandale Community College",
+      "area": "",
+      "studyType": "Concurrent Enrollment",
+      "startDate": "2023-09-30",
+      "endDate": "2025-06-30",
+      "score": "",
+      "courses": []
+    },
+    {
+      "institution": "St. Cloud State University",
+      "area": "",
+      "studyType": "Concurrent Enrollment: Engineering Design",
+      "startDate": "2022-09-30",
+      "endDate": "2023-06-30",
+      "score": "",
+      "courses": []
+    }
+  ],
+  "awards": [
+    {
+      "title": "Category 1st Place - Robotics & Intelligent Machines",
+      "date": "2025-03-31",
+      "awarder": "Twin Cities Regional Science Fair",
+      "summary": "ISEF 2nd Alternate & State Qualifier"
+    },
+    {
+      "title": "National Merit Scholarship Recipient",
+      "date": "2025-02-28",
+      "awarder": "National Merit Scholarship Corporation",
+      "summary": ""
+    },
+    {
+      "title": "NSDA Honor Society Degree of Special Distinction",
+      "date": "2024-11-30",
+      "awarder": "National Speech & Debate Association",
+      "summary": ""
+    },
+    {
+      "title": "AP International Diploma",
+      "date": "2024-07-31",
+      "awarder": "College Board",
+      "summary": ""
+    },
+    {
+      "title": "National German Exam Level 4 Guldurkunde (Gold Award)",
+      "date": "2024-03-31",
+      "awarder": "American Association of Teachers of German",
+      "summary": "Highest commendation on most advanced test level"
+    },
+    {
+      "title": "Minnesota Platinum Bilingual Seal (German & English)",
+      "date": "2024-02-28",
+      "awarder": "MN DoE",
+      "summary": ""
+    }
+  ],
+  "certificates": [
+    {
+      "name": "Matlab Onramp",
+      "issuer": "MathWorks",
+      "startDate": "2024-01-31",
+      "url": "https://matlabacademy.mathworks.com/progress/share/certificate.html?id=0b956720-4cf6-4f3b-a359-9b8cf4a89450&"
+    }
+  ],
+  "publications": [
+    {
+      "name": "Error-corrected deep learning approach to handwritten text recognition of Gregg shorthand",
+      "publisher": "engrxiv (Engineering Archive)",
+      "releaseDate": "2025-05-25",
+      "summary": "Culmination of yearlong research project creating a neural network for reading the Gregg shorthand script.\nReport - doi:10.31224/4661 / Model - doi:10.57967/hf/5604",
+      "url": "http://doi.org/10.31224/4661"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Python (Programming Language)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Machine Learning",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Gradle",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Java Development",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Object-Oriented Programming (OOP)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Advanced Mathematics",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "MATLAB",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "GNU Octave",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "jQuery",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "SOLIDWORKS",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "HTML",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "German Language",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Public Speaking",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Cascading Style Sheets (CSS)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Educational Leadership",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Git",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Engineering Mathematics",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Microsoft Excel",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Computer-Aided Design (CAD)",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "JavaScript",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Team Management",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Tailwind CSS",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Swedish Language",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Engineering Design",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Microsoft Word",
+      "level": "",
+      "keywords": []
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "fluency": "Native Speaker"
+    },
+    {
+      "fluency": "Native Speaker",
+      "language": "Swedish"
+    },
+    {
+      "fluency": "Professional Working",
+      "language": "​German"
+    }
+  ],
+  "interests": [],
+  "references": [],
+  "projects": [],
+  "meta": {
+    "version": "v1.0.0",
+    "canonical": "https://github.com/jsonresume/resume-schema/blob/v1.0.0/schema.json"
+  }
+}
