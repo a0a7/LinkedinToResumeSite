@@ -2,6 +2,8 @@
   import * as Resizable from "$lib/components/ui/resizable";
   import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { Label } from "$lib/components/ui/label/index.js";
+  import * as Dialog from "$lib/components/ui/dialog/index.js";
+  import { Button } from "$lib/components/ui/button/index.js";
   import ChevronDown from "lucide-svelte/icons/chevron-down";
   import ChevronRight from "lucide-svelte/icons/chevron-right";
   import Pencil from "lucide-svelte/icons/pencil";
@@ -11,7 +13,15 @@
   import Plus from "lucide-svelte/icons/plus";
   import * as Collapsible from "$lib/components/ui/collapsible/index.js";
   import Resume from "$lib/components/resume.svelte";
-    import { Download, HardDriveDownloadIcon } from "lucide-svelte";
+  import { Download, HardDriveDownloadIcon } from "lucide-svelte";
+  
+  // Import libraries for client-side export
+  import html2canvas from 'html2canvas';
+  import jsPDF from 'jspdf';
+  import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+  // Fix the file-saver import
+  import fileSaver from 'file-saver';
+  const { saveAs } = fileSaver;
 
   type Props = {
     data: any;
@@ -26,6 +36,11 @@
   let editingFields = $state(new Set<string>());
   let editValues = $state(new Map<string, string>());
 
+  // Download dialog state
+  let downloadDialogOpen = $state(false);
+  let selectedPaperSize = $state("A4");
+  let selectedFormat = $state("PDF");
+
   // Helper function to update data and notify parent
   function updateData(newData: any) {
     if (onDataUpdate) {
@@ -35,6 +50,32 @@
       Object.assign(data, newData);
     }
   }
+
+  function convertModernColorsToRGB(element: Element) {
+  const computedStyle = window.getComputedStyle(element);
+  const rgbRegex = /rgb\([\d\s,]+\)/;
+  
+  // Create a style object with converted colors
+  const convertedStyles: Record<string, string> = {};
+  
+  // Convert common properties that might use oklch
+  ['color', 'background-color', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'].forEach(prop => {
+    const value = computedStyle.getPropertyValue(prop);
+    if (value && !rgbRegex.test(value) && value !== 'transparent' && value !== 'none') {
+      // Create a temporary element to get the computed RGB value
+      const temp = document.createElement('div');
+      temp.style.position = 'absolute';
+      temp.style.visibility = 'hidden';
+      temp.style.color = value;
+      document.body.appendChild(temp);
+      const rgbValue = window.getComputedStyle(temp).color;
+      document.body.removeChild(temp);
+      convertedStyles[prop] = rgbValue;
+    }
+  });
+  
+  return convertedStyles;
+}
 
   // Helper function to check if a section is empty
   function isSectionEmpty(sectionKey: string, sectionValue: any): boolean {
@@ -599,6 +640,535 @@ function toggleField(fieldPath: string) {
   function isLanguageEditable(sectionKey: string): boolean {
     return sectionKey === 'languages';
   }
+
+  // Helper function to get resume HTML with embedded styles
+  function getResumeHTML(): string {
+    const resumeElement = document.querySelector('[data-resume-container]');
+    if (!resumeElement) {
+      throw new Error('Resume container not found');
+    }
+    
+    // Get computed styles for all elements
+    function getElementStyles(element: Element): string {
+      const computedStyle = window.getComputedStyle(element);
+      let styles = '';
+      
+      // Copy all computed styles
+      for (let i = 0; i < computedStyle.length; i++) {
+        const property = computedStyle[i];
+        const value = computedStyle.getPropertyValue(property);
+        styles += `${property}: ${value}; `;
+      }
+      
+      return styles;
+    }
+
+    // Clone the element and apply inline styles
+    const clonedElement = resumeElement.cloneNode(true) as Element;
+    
+    function applyInlineStyles(element: Element, original: Element) {
+      element.setAttribute('style', getElementStyles(original));
+      
+      // Apply styles to all children
+      const children = element.children;
+      const originalChildren = original.children;
+      
+      for (let i = 0; i < children.length; i++) {
+        if (originalChildren[i]) {
+          applyInlineStyles(children[i], originalChildren[i]);
+        }
+      }
+    }
+    
+    applyInlineStyles(clonedElement, resumeElement);
+    
+    // Create complete HTML document
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Resume</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            padding: 20px;
+          }
+          
+          @media print {
+            body { margin: 0; padding: 0; }
+            * { -webkit-print-color-adjust: exact !important; }
+          }
+        </style>
+      </head>
+      <body>
+        ${clonedElement.outerHTML}
+      </body>
+      </html>
+    `;
+  }
+
+  // Helper function to download blob
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Generate PDF using html2canvas + jsPDF
+async function generatePDF(paperSize: string) {
+  try {
+    const resumeElement = document.querySelector('[data-resume-container]') as HTMLElement;
+    if (!resumeElement) {
+      throw new Error('Resume container not found');
+    }
+
+    console.log('Generating PDF...');
+
+    const paperSizes = {
+      A4: { width: 210, height: 297 },
+      Letter: { width: 216, height: 279 }
+    };
+    
+    const { width: paperWidth, height: paperHeight } = paperSizes[paperSize as keyof typeof paperSizes];
+    
+    // Clone the element and apply RGB-only styles
+    const clonedElement = resumeElement.cloneNode(true) as HTMLElement;
+    
+    // Recursively apply RGB conversions
+    function applyRGBStyles(element: Element) {
+      const convertedStyles = convertModernColorsToRGB(element);
+      Object.entries(convertedStyles).forEach(([prop, value]) => {
+        (element as HTMLElement).style.setProperty(prop, value, 'important');
+      });
+      
+      // Process children
+      Array.from(element.children).forEach(child => applyRGBStyles(child));
+    }
+    
+    applyRGBStyles(clonedElement);
+    
+    // Create temporary container
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0';
+    tempContainer.appendChild(clonedElement);
+    document.body.appendChild(tempContainer);
+    
+    // Capture canvas
+    const canvas = await html2canvas(tempContainer, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: tempContainer.scrollWidth,
+      height: tempContainer.scrollHeight
+    });
+
+    // Clean up
+    document.body.removeChild(tempContainer);
+
+    // Create PDF
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: paperSize.toLowerCase() as any
+    });
+
+    const imgWidth = paperWidth - 20;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    const imgData = canvas.toDataURL('image/png');
+    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+
+    if (imgHeight > paperHeight - 20) {
+      const pageHeight = paperHeight - 20;
+      let remainingHeight = imgHeight;
+      let yPosition = 10;
+      
+      while (remainingHeight > pageHeight) {
+        pdf.addPage();
+        yPosition -= pageHeight;
+        pdf.addImage(imgData, 'PNG', 10, yPosition, imgWidth, imgHeight);
+        remainingHeight -= pageHeight;
+      }
+    }
+
+    pdf.save('resume.pdf');
+    console.log('PDF generated successfully');
+  } catch (error) {
+    console.error('PDF generation failed:', error);
+    alert('Failed to generate PDF. Please try again.');
+  }
+}
+  // Generate DOCX using docx library
+  async function generateDOCX(paperSize: string) {
+    try {
+      console.log('Generating DOCX...');
+      
+      if (!resumeData) {
+        throw new Error('No resume data available');
+      }
+
+      // Create document sections
+      const children: any[] = [];
+
+      // Add basic information
+      if (resumeData.basics?.name) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: resumeData.basics.name,
+                bold: true,
+                size: 32, // 16pt font
+              }),
+            ],
+            heading: HeadingLevel.HEADING_1,
+          })
+        );
+      }
+
+      if (resumeData.basics?.label) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: resumeData.basics.label,
+                italics: true,
+                size: 24, // 12pt font
+              }),
+            ],
+          })
+        );
+      }
+
+      // Add contact information
+      const contactInfo: string[] = [];
+      if (resumeData.basics?.email) contactInfo.push(`Email: ${resumeData.basics.email}`);
+      if (resumeData.basics?.phone) contactInfo.push(`Phone: ${resumeData.basics.phone}`);
+      if (resumeData.basics?.location?.address) contactInfo.push(`Location: ${resumeData.basics.location.address}`);
+
+      if (contactInfo.length > 0) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: contactInfo.join(' | '),
+                size: 20, // 10pt font
+              }),
+            ],
+          })
+        );
+      }
+
+      // Add profiles/links
+      if (resumeData.basics?.profiles && resumeData.basics.profiles.length > 0) {
+        const profileTexts = resumeData.basics.profiles.map((profile: any) => 
+          `${profile.network || 'Website'}: ${profile.url}`
+        );
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: profileTexts.join(' | '),
+                size: 20, // 10pt font
+              }),
+            ],
+          })
+        );
+      }
+
+      // Add summary
+      if (resumeData.basics?.summary) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Summary",
+                bold: true,
+                size: 24, // 12pt font
+              }),
+            ],
+            heading: HeadingLevel.HEADING_2,
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: resumeData.basics.summary,
+                size: 22, // 11pt font
+              }),
+            ],
+          })
+        );
+      }
+
+      // Add work experience
+      if (resumeData.work && resumeData.work.length > 0) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Work Experience",
+                bold: true,
+                size: 24, // 12pt font
+              }),
+            ],
+            heading: HeadingLevel.HEADING_2,
+          })
+        );
+
+        resumeData.work.forEach((job: any) => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${job.position} at ${job.name}`,
+                  bold: true,
+                  size: 22, // 11pt font
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${job.startDate || ''} - ${job.endDate || 'Present'}`,
+                  italics: true,
+                  size: 20, // 10pt font
+                }),
+              ],
+            })
+          );
+
+          if (job.summary) {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: job.summary,
+                    size: 22, // 11pt font
+                  }),
+                ],
+              })
+            );
+          }
+
+          if (job.highlights && job.highlights.length > 0) {
+            job.highlights.forEach((highlight: string) => {
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: `• ${highlight}`,
+                      size: 22, // 11pt font
+                    }),
+                  ],
+                })
+              );
+            });
+          }
+        });
+      }
+
+      // Add education
+      if (resumeData.education && resumeData.education.length > 0) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Education",
+                bold: true,
+                size: 24, // 12pt font
+              }),
+            ],
+            heading: HeadingLevel.HEADING_2,
+          })
+        );
+
+        resumeData.education.forEach((edu: any) => {
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${edu.studyType || ''} ${edu.area || ''} - ${edu.institution}`,
+                  bold: true,
+                  size: 22, // 11pt font
+                }),
+              ],
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: `${edu.startDate || ''} - ${edu.endDate || ''}`,
+                  italics: true,
+                  size: 20, // 10pt font
+                }),
+              ],
+            })
+          );
+        });
+      }
+
+      // Add skills
+      if (resumeData.skills && resumeData.skills.length > 0) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Skills",
+                bold: true,
+                size: 24, // 12pt font
+              }),
+            ],
+            heading: HeadingLevel.HEADING_2,
+          })
+        );
+
+        const skillsText = resumeData.skills.map((skill: any) => skill.name).join(', ');
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: skillsText,
+                size: 22, // 11pt font
+              }),
+            ],
+          })
+        );
+      }
+
+      // Add languages
+      if (resumeData.languages && resumeData.languages.length > 0) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Languages",
+                bold: true,
+                size: 24, // 12pt font
+              }),
+            ],
+            heading: HeadingLevel.HEADING_2,
+          })
+        );
+
+        const languagesText = resumeData.languages.map((lang: any) => 
+          `${lang.language} (${lang.fluency})`
+        ).join(', ');
+        
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: languagesText,
+                size: 22, // 11pt font
+              }),
+            ],
+          })
+        );
+      }
+
+      // Create document
+      const doc = new Document({
+        sections: [
+          {
+            properties: {
+              page: {
+                size: {
+                  width: paperSize === 'Letter' ? 8.5 * 1440 : 8.27 * 1440, // Convert inches to twips
+                  height: paperSize === 'Letter' ? 11 * 1440 : 11.69 * 1440,
+                },
+                margin: {
+                  top: 0.5 * 1440, // 0.5 inch margins
+                  right: 0.5 * 1440,
+                  bottom: 0.5 * 1440,
+                  left: 0.5 * 1440,
+                },
+              },
+            },
+            children: children,
+          },
+        ],
+      });
+
+      // Generate and download
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, 'resume.docx');
+      
+      console.log('DOCX generated successfully');
+    } catch (error) {
+      console.error('DOCX generation failed:', error);
+      alert('Failed to generate DOCX. Please try again.');
+    }
+  }
+
+  // Export HTML
+  function exportHTML() {
+    try {
+      console.log('Exporting HTML...');
+      const html = getResumeHTML();
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      downloadBlob(blob, 'resume.html');
+      console.log('HTML exported successfully');
+    } catch (error) {
+      console.error('HTML export failed:', error);
+      alert('Failed to export HTML. Please try again.');
+    }
+  }
+
+  // Export JSON
+  function exportJSON() {
+    try {
+      console.log('Exporting JSON...');
+      const jsonData = JSON.stringify(resumeData, null, 2);
+      const blob = new Blob([jsonData], { type: 'application/json;charset=utf-8' });
+      downloadBlob(blob, 'resume.json');
+      console.log('JSON exported successfully');
+    } catch (error) {
+      console.error('JSON export failed:', error);
+      alert('Failed to export JSON. Please try again.');
+    }
+  }
+
+  // Updated download handler
+  async function handleDownload(format: string, paperSize: string) {
+    console.log(`Downloading resume as ${format} with ${paperSize} paper size`);
+    
+    try {
+      switch (format) {
+        case 'PDF':
+          await generatePDF(paperSize);
+          break;
+        case 'DOCX':
+          await generateDOCX(paperSize);
+          break;
+        case 'HTML':
+          exportHTML();
+          break;
+        case 'JSON':
+          exportJSON();
+          break;
+        default:
+          throw new Error(`Unsupported format: ${format}`);
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert(`Failed to download ${format}. Please try again.`);
+    }
+    
+    downloadDialogOpen = false;
+  }
 </script>
 
 {#snippet sectionRenderer(sectionKey: string, sectionValue: any, idSuffix: string)}
@@ -950,8 +1520,10 @@ function toggleField(fieldPath: string) {
 
 <svelte:window onresize={handleResize} />
 
+<!-- Update the Resume component container to include data attribute -->
 <div class="h-dvh w-full">
   {#if isMobile}
+    <!-- Mobile layout remains the same -->
     <div class="h-full overflow-auto p-3 space-y-2">
       {#if data}
         {#each Object.entries(data) as [sectionKey, sectionValue]}
@@ -981,10 +1553,12 @@ function toggleField(fieldPath: string) {
           <!-- Resume Preview Section -->
           <div class="flex-1 overflow-auto">
             {#if resumeData && resumeData.basics && Object.keys(resumeData.basics).length > 0}
-              <Resume 
-                data={resumeData}
-                contacts={generateContacts(resumeData.basics)}
-              />
+              <div data-resume-container>
+                <Resume 
+                  data={resumeData}
+                  contacts={generateContacts(resumeData.basics)}
+                />
+              </div>
             {:else}
               <div class="p-3">
                 <h3 class="text-base font-semibold mb-3">Resume Preview</h3>
@@ -993,18 +1567,111 @@ function toggleField(fieldPath: string) {
             {/if}
           </div>
           
-          <!-- Download Button Section -->
+          <!-- Download Button Section - remains the same -->
           <div class="border-t bg-gray-50 p-3">
-            <button 
-              class="w-full mx-auto max-w-lg flex text-center items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!resumeData || !resumeData.basics || Object.keys(resumeData.basics).length === 0}
-              onclick={() => {
-                // TODO: Implement download functionality
-                console.log('Download resume', resumeData);
-              }}
-            >
-              <Download class="w-[17px] h-[17px]"/> Download
-            </button>
+            <Dialog.Root bind:open={downloadDialogOpen}>
+              <Dialog.Trigger>
+                <Button 
+                  class="w-full mx-auto max-w-lg flex text-center items-center justify-center gap-2"
+                  disabled={!resumeData || !resumeData.basics || Object.keys(resumeData.basics).length === 0}
+                >
+                  <Download class="w-[17px] h-[17px]"/> Download
+                </Button>
+              </Dialog.Trigger>
+              <Dialog.Content class="sm:max-w-[425px]">
+                <Dialog.Header>
+                  <Dialog.Title>Download Resume</Dialog.Title>
+                  <Dialog.Description>
+                    Choose your preferred format and paper size for your resume.
+                  </Dialog.Description>
+                </Dialog.Header>
+                <div class="grid gap-6 py-4">
+                  <!-- Paper Size Selection -->
+                  <div class="space-y-3">
+                    <Label class="text-sm font-medium">Paper Size</Label>
+                    <div class="flex gap-4">
+                      <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          bind:group={selectedPaperSize} 
+                          value="A4"
+                          class="w-4 h-4 text-primary"
+                        />
+                        <span class="text-sm">A4</span>
+                      </label>
+                      <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          bind:group={selectedPaperSize} 
+                          value="Letter"
+                          class="w-4 h-4 text-primary"
+                        />
+                        <span class="text-sm">Letter</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Format Selection -->
+                  <div class="space-y-3">
+                    <Label class="text-sm font-medium">Format</Label>
+                    <div class="flex gap-4">
+                      <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          bind:group={selectedFormat} 
+                          value="PDF"
+                          class="w-4 h-4 text-primary"
+                        />
+                        <span class="text-sm">PDF</span>
+                      </label>
+                      <label class="flex items-center space-x-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          bind:group={selectedFormat} 
+                          value="DOCX"
+                          class="w-4 h-4 text-primary"
+                        />
+                        <span class="text-sm">DOCX</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Alternative Export Options -->
+                  <div class="border-t pt-4">
+                    <p class="text-xs text-gray-500 mb-2">Or, alternatively, export as:</p>
+                    <div class="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onclick={() => handleDownload('HTML', selectedPaperSize)}
+                      >
+                        HTML
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onclick={() => handleDownload('JSON', selectedPaperSize)}
+                      >
+                        JSON
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <Dialog.Footer>
+                  <Button 
+                    variant="outline" 
+                    onclick={() => downloadDialogOpen = false}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onclick={() => handleDownload(selectedFormat, selectedPaperSize)}
+                  >
+                    Download {selectedFormat}
+                  </Button>
+                </Dialog.Footer>
+              </Dialog.Content>
+            </Dialog.Root>
           </div>
         </div>
       </Resizable.Pane>

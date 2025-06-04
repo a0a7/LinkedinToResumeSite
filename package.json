@@ -19,6 +19,7 @@
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"@tanstack/table-core": "^8.20.5",
+		"@types/html-to-docx": "^1.8.0",
 		"bits-ui": "^2.4.1",
 		"clsx": "^2.1.1",
 		"embla-carousel-svelte": "^8.6.0",
@@ -40,10 +41,19 @@
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
-			"esbuild"
+			"esbuild",
+			"puppeteer"
 		]
 	},
 	"dependencies": {
-		"lucide-svelte": "^0.511.0"
+		"@types/file-saver": "^2.0.7",
+		"docx": "^9.5.0",
+		"file-saver": "^2.0.5",
+		"html-docx-js": "^0.3.1",
+		"html-to-docx": "^1.8.0",
+		"html2canvas": "^1.4.1",
+		"jspdf": "^3.0.1",
+		"lucide-svelte": "^0.511.0",
+		"puppeteer": "^24.10.0"
 	}
 }
