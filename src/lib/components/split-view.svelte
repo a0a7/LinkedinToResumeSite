@@ -13,14 +13,15 @@
   import Plus from "lucide-svelte/icons/plus";
   import * as Collapsible from "$lib/components/ui/collapsible/index.js";
   import Resume from "$lib/components/resume.svelte";
-  import { Download, HardDriveDownloadIcon } from "lucide-svelte";
+  import { Book, Download, HardDriveDownloadIcon } from "lucide-svelte";
   
   // Import libraries for client-side export
   import html2canvas from 'html2canvas';
   import jsPDF from 'jspdf';
-  import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
-  // Fix the file-saver import
+  // Remove the problematic html-to-docx import for now
   import fileSaver from 'file-saver';
+    import ChevronLeft from "@lucide/svelte/icons/chevron-left";
+    import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   const { saveAs } = fileSaver;
 
   type Props = {
@@ -29,6 +30,7 @@
   };
 
   let { data, onDataUpdate }: Props = $props();
+  let showDocxInstructions = $state(false); // New state for showing instructions
 
   let isMobile = $state(false);
   let selectedFields = $state(new Set<string>());
@@ -811,307 +813,64 @@ async function generatePDF(paperSize: string) {
     alert('Failed to generate PDF. Please try again.');
   }
 }
-  // Generate DOCX using docx library
-  async function generateDOCX(paperSize: string) {
+  // Simplified DOCX generation using dynamic import to avoid circular dependency
+async function generateDOCX(paperSize: string) {
     try {
       console.log('Generating DOCX...');
       
-      if (!resumeData) {
-        throw new Error('No resume data available');
+      // Dynamic import to avoid circular dependency issues
+      const { default: HTMLtoDOCX } = await import('html-to-docx');
+      
+      const resumeElement = document.querySelector('[data-resume-container]');
+      if (!resumeElement) {
+        throw new Error('Resume container not found');
       }
 
-      // Create document sections
-      const children: any[] = [];
-
-      // Add basic information
-      if (resumeData.basics?.name) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: resumeData.basics.name,
-                bold: true,
-                size: 32, // 16pt font
-              }),
-            ],
-            heading: HeadingLevel.HEADING_1,
-          })
-        );
-      }
-
-      if (resumeData.basics?.label) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: resumeData.basics.label,
-                italics: true,
-                size: 24, // 12pt font
-              }),
-            ],
-          })
-        );
-      }
-
-      // Add contact information
-      const contactInfo: string[] = [];
-      if (resumeData.basics?.email) contactInfo.push(`Email: ${resumeData.basics.email}`);
-      if (resumeData.basics?.phone) contactInfo.push(`Phone: ${resumeData.basics.phone}`);
-      if (resumeData.basics?.location?.address) contactInfo.push(`Location: ${resumeData.basics.location.address}`);
-
-      if (contactInfo.length > 0) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: contactInfo.join(' | '),
-                size: 20, // 10pt font
-              }),
-            ],
-          })
-        );
-      }
-
-      // Add profiles/links
-      if (resumeData.basics?.profiles && resumeData.basics.profiles.length > 0) {
-        const profileTexts = resumeData.basics.profiles.map((profile: any) => 
-          `${profile.network || 'Website'}: ${profile.url}`
-        );
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: profileTexts.join(' | '),
-                size: 20, // 10pt font
-              }),
-            ],
-          })
-        );
-      }
-
-      // Add summary
-      if (resumeData.basics?.summary) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Summary",
-                bold: true,
-                size: 24, // 12pt font
-              }),
-            ],
-            heading: HeadingLevel.HEADING_2,
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: resumeData.basics.summary,
-                size: 22, // 11pt font
-              }),
-            ],
-          })
-        );
-      }
-
-      // Add work experience
-      if (resumeData.work && resumeData.work.length > 0) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Work Experience",
-                bold: true,
-                size: 24, // 12pt font
-              }),
-            ],
-            heading: HeadingLevel.HEADING_2,
-          })
-        );
-
-        resumeData.work.forEach((job: any) => {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${job.position} at ${job.name}`,
-                  bold: true,
-                  size: 22, // 11pt font
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${job.startDate || ''} - ${job.endDate || 'Present'}`,
-                  italics: true,
-                  size: 20, // 10pt font
-                }),
-              ],
-            })
-          );
-
-          if (job.summary) {
-            children.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: job.summary,
-                    size: 22, // 11pt font
-                  }),
-                ],
-              })
-            );
-          }
-
-          if (job.highlights && job.highlights.length > 0) {
-            job.highlights.forEach((highlight: string) => {
-              children.push(
-                new Paragraph({
-                  children: [
-                    new TextRun({
-                      text: `• ${highlight}`,
-                      size: 22, // 11pt font
-                    }),
-                  ],
-                })
-              );
-            });
-          }
-        });
-      }
-
-      // Add education
-      if (resumeData.education && resumeData.education.length > 0) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Education",
-                bold: true,
-                size: 24, // 12pt font
-              }),
-            ],
-            heading: HeadingLevel.HEADING_2,
-          })
-        );
-
-        resumeData.education.forEach((edu: any) => {
-          children.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${edu.studyType || ''} ${edu.area || ''} - ${edu.institution}`,
-                  bold: true,
-                  size: 22, // 11pt font
-                }),
-              ],
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${edu.startDate || ''} - ${edu.endDate || ''}`,
-                  italics: true,
-                  size: 20, // 10pt font
-                }),
-              ],
-            })
-          );
-        });
-      }
-
-      // Add skills
-      if (resumeData.skills && resumeData.skills.length > 0) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Skills",
-                bold: true,
-                size: 24, // 12pt font
-              }),
-            ],
-            heading: HeadingLevel.HEADING_2,
-          })
-        );
-
-        const skillsText = resumeData.skills.map((skill: any) => skill.name).join(', ');
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: skillsText,
-                size: 22, // 11pt font
-              }),
-            ],
-          })
-        );
-      }
-
-      // Add languages
-      if (resumeData.languages && resumeData.languages.length > 0) {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "Languages",
-                bold: true,
-                size: 24, // 12pt font
-              }),
-            ],
-            heading: HeadingLevel.HEADING_2,
-          })
-        );
-
-        const languagesText = resumeData.languages.map((lang: any) => 
-          `${lang.language} (${lang.fluency})`
-        ).join(', ');
-        
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: languagesText,
-                size: 22, // 11pt font
-              }),
-            ],
-          })
-        );
-      }
-
-      // Create document
-      const doc = new Document({
-        sections: [
-          {
-            properties: {
-              page: {
-                size: {
-                  width: paperSize === 'Letter' ? 8.5 * 1440 : 8.27 * 1440, // Convert inches to twips
-                  height: paperSize === 'Letter' ? 11 * 1440 : 11.69 * 1440,
-                },
-                margin: {
-                  top: 0.5 * 1440, // 0.5 inch margins
-                  right: 0.5 * 1440,
-                  bottom: 0.5 * 1440,
-                  left: 0.5 * 1440,
-                },
-              },
-            },
-            children: children,
-          },
-        ],
+      // Get the HTML content with inline styles
+      const htmlContent = getResumeHTML();
+      
+      // Convert HTML to DOCX using html-to-docx with simplified options
+      const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
+        font: 'Arial',
+        fontSize: 11,
+        margins: {
+          top: 720,    // 0.5 inch in twips
+          right: 720,
+          bottom: 720,
+          left: 720
+        },
+        orientation: 'portrait',
+        // Add page size based on selection
+        ...(paperSize === 'A4' ? {
+          width: 11906,  // A4 width in twips
+          height: 16838  // A4 height in twips
+        } : {
+          width: 12240,  // Letter width in twips
+          height: 15840  // Letter height in twips
+        })
       });
 
-      // Generate and download
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, 'resume.docx');
+      // Create blob and download
+      const blob = new Blob([docxBuffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
       
+      saveAs(blob, 'resume.docx');
       console.log('DOCX generated successfully');
+      downloadDialogOpen = false;
+      
     } catch (error) {
       console.error('DOCX generation failed:', error);
-      alert('Failed to generate DOCX. Please try again.');
+      
+      // Show instructions UI instead of alert
+      showDocxInstructions = true;
     }
   }
 
+  // Handle going back from instructions
+  function goBackFromInstructions() {
+    showDocxInstructions = false;
+  }
   // Export HTML
   function exportHTML() {
     try {
@@ -1139,8 +898,12 @@ async function generatePDF(paperSize: string) {
       alert('Failed to export JSON. Please try again.');
     }
   }
+    function downloadHTMLFromInstructions() {
+    exportHTML();
+    downloadDialogOpen = false;
+    showDocxInstructions = false;
+  }
 
-  // Updated download handler
   async function handleDownload(format: string, paperSize: string) {
     console.log(`Downloading resume as ${format} with ${paperSize} paper size`);
     
@@ -1166,7 +929,9 @@ async function generatePDF(paperSize: string) {
       alert(`Failed to download ${format}. Please try again.`);
     }
     
-    downloadDialogOpen = false;
+    if (format !== 'DOCX') {
+      downloadDialogOpen = false;
+    }
   }
 </script>
 
@@ -1578,81 +1343,143 @@ async function generatePDF(paperSize: string) {
                 </Button>
               </Dialog.Trigger>
               <Dialog.Content class="sm:max-w-[425px]">
-                <Dialog.Header>
-                  <Dialog.Title>Download Resume</Dialog.Title>
-                  <Dialog.Description>
-                    Once exported, you can make further edits in text editors like Word or Docs.
-                  </Dialog.Description>
-                </Dialog.Header>
-                <div class="grid gap-6 py-4">
-                  <!-- Paper Size Selection with Toggle Buttons -->
-                  <div class="space-y-3">
-                    <Label class="text-sm font-medium">Paper Size</Label>
-                    <div class="flex gap-2">
-                      <Button
-                        variant={selectedPaperSize === "A4" ? "default" : "outline"}
-                        size="sm"
-                        onclick={() => selectedPaperSize = "A4"}
-                        class="flex-1"
-                      >
-                        A4
-                      </Button>
-                      <Button
-                        variant={selectedPaperSize === "Letter" ? "default" : "outline"}
-                        size="sm"
-                        onclick={() => selectedPaperSize = "Letter"}
-                        class="flex-1"
-                      >
-                        Letter
-                      </Button>
+                {#if !showDocxInstructions}
+                  <!-- Normal download dialog -->
+                    <Dialog.Title>Download Resume</Dialog.Title>
+                  <div class="grid gap-6 py-4">
+                    <!-- Paper Size Selection with Toggle Buttons -->
+                    <div class="space-y-3">
+                      <Label class="text-sm font-medium">Paper Size</Label>
+                      <div class="flex gap-2">
+                        <Button
+                          variant={selectedPaperSize === "A4" ? "default" : "outline"}
+                          size="sm"
+                          onclick={() => selectedPaperSize = "A4"}
+                          class="flex-1 cursor-pointer"
+                        >
+                          A4
+                        </Button>
+                        <Button
+                          variant={selectedPaperSize === "Letter" ? "default" : "outline"}
+                          size="sm"
+                          onclick={() => selectedPaperSize = "Letter"}
+                          class="flex-1 cursor-pointer"
+                        >
+                          Letter
+                        </Button>
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- Download Buttons -->
-                  <div class="space-y-3">
-                    <Label class="text-sm font-medium">Download</Label>
-                    <div class="flex gap-2">
+                    <div class="space-y-3">
+                      <Label class="text-sm font-medium inline ">Download</Label>
+                      <div class="flex gap-2 pt-2">
+                        <Button 
+                          onclick={() => handleDownload('PDF', selectedPaperSize)}
+                          class="flex-1 cursor-pointer"
+                        >
+                          <Download/> Save as PDF
+                        </Button>
+                        <Button 
+                          onclick={() => handleDownload('HTML', selectedPaperSize)}
+                          class="flex-1 cursor-pointer"
+                        >
+                          <Download/> Save as HTML
+                        </Button>
+                      </div>
                       <Button 
-                        onclick={() => handleDownload('PDF', selectedPaperSize)}
-                        class="flex-1"
-                      >
-                        <Download/> Save as PDF
-                      </Button>
-                      <Button 
+                        variant="secondary"
                         onclick={() => handleDownload('DOCX', selectedPaperSize)}
-                        class="flex-1"
+                        class="flex-1 cursor-pointer w-full"
                       >
-                          <Download/> Save as DOCX
+                        <Book /> DOCX Instructions
                       </Button>
-                    </div>
-                    <Button 
+                      <Button 
                         variant="outline" 
                         onclick={() => downloadDialogOpen = false}
-                        class="w-full"
+                        class="w-full cursor-pointer"
                       >
                         Cancel
                       </Button>
-                  </div>
+                                            <div class="text-center inline">
+                        <p class="text-xs text-gray-500 -mb-2">or export as
 
-                  <!-- Alternative Export Options -->
-                  <div class="text-center inline">
-                    <p class="text-xs text-gray-500 mb-2">Or, alternatively, export as
-                      <button 
-                        onclick={() => handleDownload('HTML', selectedPaperSize)}
-                        class="cursor-pointer hover:opacity-80 text-xs text-gray-500 underline hover:text-gray-700"
-                      >
-                        HTML
-                      </button>
-                      or
-                      <button 
-                        onclick={() => handleDownload('JSON', selectedPaperSize)}
-                        class="cursor-pointer hover:opacity-80 text-xs text-gray-500 underline hover:text-gray-700"
-                      >
-                        JSON
-                      </button>
-                      </p>
+                          <button 
+                            onclick={() => handleDownload('JSON', selectedPaperSize)}
+                            class="cursor-pointer hover:opacity-80 text-xs text-gray-500 underline hover:text-gray-700"
+                          >
+                            JSON
+                          </button>
+                        </p>
+                      </div>
+
+                    </div>
                   </div>
-                </div>
+                {:else}
+                  <Dialog.Header>
+                    <div class="flex items-center gap-2">
+                      <button 
+                        onclick={goBackFromInstructions}
+                        class="p-1 hover:bg-gray-100 rounded-full"
+                        title="Go back"
+                      >
+                        <ArrowLeft class="h-4 w-4" />
+                      </button>
+                      <Dialog.Title>DOCX Instructions</Dialog.Title>
+                    </div>
+                    <Dialog.Description>
+                      Direct DOCX export isn't something this website has. You can still easily get your resume as a Word document:
+                    </Dialog.Description>
+                  </Dialog.Header>
+                  
+                  <div class="py-4 space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 class="font-semibold text-blue-900 mb-2">Method 1: HTML → Word (Recommended)</h4>
+                      <ol class="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                        <li>Download as HTML using the button below</li>
+                        <li>Open the HTML file in Microsoft Word or LibreOffice Writer</li>
+                        <li>Save as DOCX from within Word/Writer</li>
+                      </ol>
+                    </div>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 class="font-semibold text-green-900 mb-2">Method 2: PDF → Word</h4>
+                      <ol class="text-sm text-green-800 space-y-1 list-decimal list-inside">
+                        <li>Download as PDF  first</li>
+                        <li>Open PDF in Word (Word 2013+ can convert PDFs)</li>
+                        <li>Or use an online PDF to DOCX converter</li>
+                      </ol>
+                    </div>
+
+                    <div class="space-y-2">
+                      <Button 
+                        onclick={downloadHTMLFromInstructions}
+                        class="w-full cursor-pointer"
+                      >
+                        <Download/> Download as HTML
+                      </Button>
+                      
+                      <div class="flex gap-2">
+                        <Button 
+                          variant="outline"
+                          onclick={goBackFromInstructions}
+                          class="flex-1 cursor-pointer"
+                        >
+                          Back
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onclick={() => {
+                            downloadDialogOpen = false;
+                            showDocxInstructions = false;
+                          }}
+                          class="flex-1 cursor-pointer"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                {/if}
               </Dialog.Content>
             </Dialog.Root>
           </div>

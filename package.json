@@ -19,6 +19,7 @@
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"@tanstack/table-core": "^8.20.5",
+		"@types/html-docx-js": "^0.3.4",
 		"@types/html-to-docx": "^1.8.0",
 		"bits-ui": "^2.4.1",
 		"clsx": "^2.1.1",

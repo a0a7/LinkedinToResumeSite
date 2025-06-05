@@ -57,6 +57,9 @@ importers:
       '@tanstack/table-core':
         specifier: ^8.20.5
         version: 8.21.3
+      '@types/html-docx-js':
+        specifier: ^0.3.4
+        version: 0.3.4
       '@types/html-to-docx':
         specifier: ^1.8.0
         version: 1.8.0
@@ -988,6 +991,9 @@ packages:
 
   '@types/file-saver@2.0.7':
     resolution: {integrity: sha512-dNKVfHd/jk0SkR/exKGj2ggkB45MAkzvWCaqLUUgkyjITkGNzH8H+yUwr+BLJUBjZOe9w8X3wgmXhZDRg1ED6A==}
+
+  '@types/html-docx-js@0.3.4':
+    resolution: {integrity: sha512-+t/4SxNnEq+0xbSUG7LrOOfG/y12aTXBjYKtOYtigVRIIOCEmK7jh0pSUeW5ATvI934274hkzdBg57t5RDrZow==}
 
   '@types/html-to-docx@1.8.0':
     resolution: {integrity: sha512-z1sP0XmOGfxChBP5s4bzhaAjaOqlQ3hRKol8diGQG3vYvJF231t/xYT43Mo3q/MzKYzhfCEkN8l40dn4qHdjYg==}
@@ -3279,6 +3285,10 @@ snapshots:
   '@types/estree@1.0.7': {}
 
   '@types/file-saver@2.0.7': {}
+
+  '@types/html-docx-js@0.3.4':
+    dependencies:
+      '@types/node': 22.15.29
 
   '@types/html-to-docx@1.8.0':
     dependencies:
