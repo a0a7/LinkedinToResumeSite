@@ -1436,27 +1436,22 @@ async function generateDOCX(paperSize: string) {
 
                     <div class="space-y-3">
                       <Label class="text-sm font-medium inline ">Download</Label>
+
                       <div class="flex gap-2 pt-2">
-                        <Button 
+                                                <Button 
                           onclick={() => handleDownload('PDF', selectedPaperSize)}
                           class="flex-1 cursor-pointer"
                         >
                           <Download/> Save as PDF
                         </Button>
-                        <Button 
-                          onclick={() => handleDownload('HTML', selectedPaperSize)}
-                          class="flex-1 cursor-pointer"
-                        >
-                          <Download/> Save as HTML
-                        </Button>
-                      </div>
-                      <Button 
-                        variant="secondary"
+                                              <Button 
                         onclick={() => handleDownload('DOCX', selectedPaperSize)}
-                        class="flex-1 cursor-pointer w-full"
+                        class="flex-1 cursor-pointer"
                       >
                         <Book /> DOCX Instructions
                       </Button>
+                      </div>
+
                       <Button 
                         variant="outline" 
                         onclick={() => downloadDialogOpen = false}
@@ -1466,7 +1461,12 @@ async function generateDOCX(paperSize: string) {
                       </Button>
                                             <div class="text-center inline">
                         <p class="text-xs text-gray-500 -mb-2">or export as
-
+                          <button 
+                            onclick={() => handleDownload('HTML', selectedPaperSize)}
+                            class="cursor-pointer hover:opacity-80 text-xs text-gray-500 underline hover:text-gray-700"
+                          >
+                            HTML
+                          </button> or 
                           <button 
                             onclick={() => handleDownload('JSON', selectedPaperSize)}
                             class="cursor-pointer hover:opacity-80 text-xs text-gray-500 underline hover:text-gray-700"
@@ -1508,9 +1508,7 @@ async function generateDOCX(paperSize: string) {
                     <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                       <h4 class="font-semibold text-green-900 mb-2">Method 2: PDF → Word</h4>
                       <ol class="text-sm text-green-800 space-y-1 list-decimal list-inside">
-                        <li>Download as PDF  first</li>
-                        <li>Open PDF in Word (Word 2013+ can convert PDFs)</li>
-                        <li>Or use an online PDF to DOCX converter</li>
+                        <li>Download as PDF, which can be opened and edited in modern versions of word.</li>
                       </ol>
                     </div>
 
