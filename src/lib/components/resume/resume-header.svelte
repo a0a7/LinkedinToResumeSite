@@ -37,6 +37,7 @@
 	<div class="mt-3 flex justify-center gap-4">
 		{#each contacts as contact}
 			<div class="flex items-center gap-1 text-sm">
+				<!-- svelte-ignore svelte_component_deprecated -->
 				<svelte:component this={getIcon(contact.icon)} class="h-4 w-4" />
 				{#if contact.href}
 					<a href={contact.href} class="hover:underline">{contact.label}</a>
