@@ -39,7 +39,6 @@
   // Download dialog state
   let downloadDialogOpen = $state(false);
   let selectedPaperSize = $state("A4");
-  let selectedFormat = $state("PDF");
 
   // Helper function to update data and notify parent
   function updateData(newData: any) {
@@ -1582,94 +1581,78 @@ async function generatePDF(paperSize: string) {
                 <Dialog.Header>
                   <Dialog.Title>Download Resume</Dialog.Title>
                   <Dialog.Description>
-                    Choose your preferred format and paper size for your resume.
+                    Once exported, you can make further edits in text editors like Word or Docs.
                   </Dialog.Description>
                 </Dialog.Header>
                 <div class="grid gap-6 py-4">
-                  <!-- Paper Size Selection -->
+                  <!-- Paper Size Selection with Toggle Buttons -->
                   <div class="space-y-3">
                     <Label class="text-sm font-medium">Paper Size</Label>
-                    <div class="flex gap-4">
-                      <label class="flex items-center space-x-2 cursor-pointer">
-                        <input 
-                          type="radio" 
-                          bind:group={selectedPaperSize} 
-                          value="A4"
-                          class="w-4 h-4 text-primary"
-                        />
-                        <span class="text-sm">A4</span>
-                      </label>
-                      <label class="flex items-center space-x-2 cursor-pointer">
-                        <input 
-                          type="radio" 
-                          bind:group={selectedPaperSize} 
-                          value="Letter"
-                          class="w-4 h-4 text-primary"
-                        />
-                        <span class="text-sm">Letter</span>
-                      </label>
+                    <div class="flex gap-2">
+                      <Button
+                        variant={selectedPaperSize === "A4" ? "default" : "outline"}
+                        size="sm"
+                        onclick={() => selectedPaperSize = "A4"}
+                        class="flex-1"
+                      >
+                        A4
+                      </Button>
+                      <Button
+                        variant={selectedPaperSize === "Letter" ? "default" : "outline"}
+                        size="sm"
+                        onclick={() => selectedPaperSize = "Letter"}
+                        class="flex-1"
+                      >
+                        Letter
+                      </Button>
                     </div>
                   </div>
 
-                  <!-- Format Selection -->
+                  <!-- Download Buttons -->
                   <div class="space-y-3">
-                    <Label class="text-sm font-medium">Format</Label>
-                    <div class="flex gap-4">
-                      <label class="flex items-center space-x-2 cursor-pointer">
-                        <input 
-                          type="radio" 
-                          bind:group={selectedFormat} 
-                          value="PDF"
-                          class="w-4 h-4 text-primary"
-                        />
-                        <span class="text-sm">PDF</span>
-                      </label>
-                      <label class="flex items-center space-x-2 cursor-pointer">
-                        <input 
-                          type="radio" 
-                          bind:group={selectedFormat} 
-                          value="DOCX"
-                          class="w-4 h-4 text-primary"
-                        />
-                        <span class="text-sm">DOCX</span>
-                      </label>
+                    <Label class="text-sm font-medium">Download</Label>
+                    <div class="flex gap-2">
+                      <Button 
+                        onclick={() => handleDownload('PDF', selectedPaperSize)}
+                        class="flex-1"
+                      >
+                        <Download/> Save as PDF
+                      </Button>
+                      <Button 
+                        onclick={() => handleDownload('DOCX', selectedPaperSize)}
+                        class="flex-1"
+                      >
+                          <Download/> Save as DOCX
+                      </Button>
                     </div>
+                    <Button 
+                        variant="outline" 
+                        onclick={() => downloadDialogOpen = false}
+                        class="w-full"
+                      >
+                        Cancel
+                      </Button>
                   </div>
 
                   <!-- Alternative Export Options -->
-                  <div class="border-t pt-4">
-                    <p class="text-xs text-gray-500 mb-2">Or, alternatively, export as:</p>
-                    <div class="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
+                  <div class="text-center inline">
+                    <p class="text-xs text-gray-500 mb-2">Or, alternatively, export as
+                      <button 
                         onclick={() => handleDownload('HTML', selectedPaperSize)}
+                        class="cursor-pointer hover:opacity-80 text-xs text-gray-500 underline hover:text-gray-700"
                       >
                         HTML
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
+                      </button>
+                      or
+                      <button 
                         onclick={() => handleDownload('JSON', selectedPaperSize)}
+                        class="cursor-pointer hover:opacity-80 text-xs text-gray-500 underline hover:text-gray-700"
                       >
                         JSON
-                      </Button>
-                    </div>
+                      </button>
+                      </p>
                   </div>
                 </div>
-                <Dialog.Footer>
-                  <Button 
-                    variant="outline" 
-                    onclick={() => downloadDialogOpen = false}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onclick={() => handleDownload(selectedFormat, selectedPaperSize)}
-                  >
-                    Download {selectedFormat}
-                  </Button>
-                </Dialog.Footer>
               </Dialog.Content>
             </Dialog.Root>
           </div>
