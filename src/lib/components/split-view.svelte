@@ -742,9 +742,28 @@ async function generatePDF(paperSize: string) {
     };
     
     const { width: paperWidth, height: paperHeight } = paperSizes[paperSize as keyof typeof paperSizes];
+    const margin = 10; // 10mm margin on all sides
+    const contentWidth = paperWidth - (margin * 2);
+    const contentHeight = paperHeight - (margin * 2);
     
-    // Clone the element and apply RGB-only styles
+      // Clone the element and apply RGB-only styles + page break styles
     const clonedElement = resumeElement.cloneNode(true) as HTMLElement;
+    
+    // Add CSS for better page breaks
+    clonedElement.style.cssText += `
+      page-break-inside: avoid;
+      break-inside: avoid;
+    `;
+    
+    // Apply page break styles to resume sections
+    const sections = clonedElement.querySelectorAll('section, .resume-section, h1, h2, h3, .section-header');
+    sections.forEach(section => {
+      (section as HTMLElement).style.cssText += `
+        page-break-inside: avoid;
+        break-inside: avoid;
+        page-break-after: auto;
+      `;
+    });
     
     // Recursively apply RGB conversions
     function applyRGBStyles(element: Element) {
@@ -759,22 +778,31 @@ async function generatePDF(paperSize: string) {
     
     applyRGBStyles(clonedElement);
     
-    // Create temporary container
+    // Create temporary container with print-optimized styles
     const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.top = '0';
+    tempContainer.style.cssText = `
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: ${contentWidth * 3.78}px;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #000;
+      background: #fff;
+    `;
     tempContainer.appendChild(clonedElement);
     document.body.appendChild(tempContainer);
     
-    // Capture canvas
+    // Capture canvas with better settings for text
     const canvas = await html2canvas(tempContainer, {
-      scale: 2,
+      scale: 3, // Higher scale for better text quality
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
       width: tempContainer.scrollWidth,
-      height: tempContainer.scrollHeight
+      height: tempContainer.scrollHeight,
+      letterRendering: true, // Better text rendering
+      logging: false
     });
 
     // Clean up
@@ -787,22 +815,58 @@ async function generatePDF(paperSize: string) {
       format: paperSize.toLowerCase() as any
     });
 
-    const imgWidth = paperWidth - 20;
+    const imgWidth = contentWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-
-    if (imgHeight > paperHeight - 20) {
-      const pageHeight = paperHeight - 20;
-      let remainingHeight = imgHeight;
-      let yPosition = 10;
+    // If content fits on one page, add it directly
+    if (imgHeight <= contentHeight) {
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+    } else {
+      // For multi-page content, use a different approach
+      // Scale down to fit width and let it flow naturally
+      const scaledHeight = Math.min(imgHeight, contentHeight * 0.95); // Leave some margin for safety
+      const imgData = canvas.toDataURL('image/png', 1.0);
       
-      while (remainingHeight > pageHeight) {
-        pdf.addPage();
-        yPosition -= pageHeight;
-        pdf.addImage(imgData, 'PNG', 10, yPosition, imgWidth, imgHeight);
-        remainingHeight -= pageHeight;
+      // Calculate how many pages we need based on scaled content
+      const pagesNeeded = Math.ceil(imgHeight / scaledHeight);
+      
+      for (let pageIndex = 0; pageIndex < pagesNeeded; pageIndex++) {
+        if (pageIndex > 0) {
+          pdf.addPage();
+        }
+        
+        // For each page, create a slice but ensure we don't cut text
+        const yOffset = pageIndex * scaledHeight;
+        const remainingHeight = Math.min(scaledHeight, imgHeight - yOffset);
+        
+        // Create a temporary canvas for this page
+        const pageCanvas = document.createElement('canvas');
+        const pageCtx = pageCanvas.getContext('2d');
+        
+        if (pageCtx) {
+          const sourceYPixels = (yOffset * canvas.width) / imgWidth;
+          const sourceHeightPixels = (remainingHeight * canvas.width) / imgWidth;
+          
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sourceHeightPixels;
+          
+          // Fill with white background first
+          pageCtx.fillStyle = '#ffffff';
+          pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          
+          // Draw the content slice
+          pageCtx.drawImage(
+            canvas,
+            0, sourceYPixels,
+            canvas.width, sourceHeightPixels,
+            0, 0,
+            canvas.width, sourceHeightPixels
+          );
+          
+          const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
+          pdf.addImage(pageImgData, 'PNG', margin, margin, imgWidth, remainingHeight);
+        }
       }
     }
 
