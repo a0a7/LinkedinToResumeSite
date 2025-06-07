@@ -746,24 +746,15 @@ async function generatePDF(paperSize: string) {
     const contentWidth = paperWidth - (margin * 2);
     const contentHeight = paperHeight - (margin * 2);
     
-      // Clone the element and apply RGB-only styles + page break styles
-    const clonedElement = resumeElement.cloneNode(true) as HTMLElement;
-    
-    // Add CSS for better page breaks
-    clonedElement.style.cssText += `
-      page-break-inside: avoid;
-      break-inside: avoid;
-    `;
-    
-    // Apply page break styles to resume sections
-    const sections = clonedElement.querySelectorAll('section, .resume-section, h1, h2, h3, .section-header');
-    sections.forEach(section => {
-      (section as HTMLElement).style.cssText += `
-        page-break-inside: avoid;
-        break-inside: avoid;
-        page-break-after: auto;
-      `;
+    // Create PDF instance
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: paperSize.toLowerCase() as any
     });
+
+    // Clone and prepare the element
+    const clonedElement = resumeElement.cloneNode(true) as HTMLElement;
     
     // Recursively apply RGB conversions
     function applyRGBStyles(element: Element) {
@@ -778,97 +769,106 @@ async function generatePDF(paperSize: string) {
     
     applyRGBStyles(clonedElement);
     
-    // Create temporary container with print-optimized styles
+    // Set up the content for print
+    clonedElement.style.cssText = `
+      width: ${contentWidth * 3.78}px !important;
+      min-height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      font-size: 14px !important;
+      line-height: 1.4 !important;
+      color: #000 !important;
+      background: #fff !important;
+      page-break-inside: avoid !important;
+    `;
+
+    // Create temporary container
     const tempContainer = document.createElement('div');
     tempContainer.style.cssText = `
       position: absolute;
       left: -9999px;
       top: 0;
       width: ${contentWidth * 3.78}px;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #000;
       background: #fff;
+      overflow: visible;
     `;
     tempContainer.appendChild(clonedElement);
     document.body.appendChild(tempContainer);
-    
-    // Capture canvas with better settings for text
-    const canvas = await html2canvas(tempContainer, {
-      scale: 3, // Higher scale for better text quality
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      width: tempContainer.scrollWidth,
-      height: tempContainer.scrollHeight,
-      letterRendering: true, // Better text rendering
-      logging: false
-    });
 
-    // Clean up
-    document.body.removeChild(tempContainer);
+    // First pass: measure total height
+    const totalHeight = tempContainer.scrollHeight;
+    const pageHeightPx = contentHeight * 3.78; // Convert mm to px at scale
+    const totalPages = Math.ceil(totalHeight / pageHeightPx);
 
-    // Create PDF
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: paperSize.toLowerCase() as any
-    });
+    console.log(`Total height: ${totalHeight}px, Page height: ${pageHeightPx}px, Total pages: ${totalPages}`);
 
-    const imgWidth = contentWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
-    // If content fits on one page, add it directly
-    if (imgHeight <= contentHeight) {
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
-    } else {
-      // For multi-page content, use a different approach
-      // Scale down to fit width and let it flow naturally
-      const scaledHeight = Math.min(imgHeight, contentHeight * 0.95); // Leave some margin for safety
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      
-      // Calculate how many pages we need based on scaled content
-      const pagesNeeded = Math.ceil(imgHeight / scaledHeight);
-      
-      for (let pageIndex = 0; pageIndex < pagesNeeded; pageIndex++) {
-        if (pageIndex > 0) {
-          pdf.addPage();
-        }
-        
-        // For each page, create a slice but ensure we don't cut text
-        const yOffset = pageIndex * scaledHeight;
-        const remainingHeight = Math.min(scaledHeight, imgHeight - yOffset);
-        
-        // Create a temporary canvas for this page
-        const pageCanvas = document.createElement('canvas');
-        const pageCtx = pageCanvas.getContext('2d');
-        
-        if (pageCtx) {
-          const sourceYPixels = (yOffset * canvas.width) / imgWidth;
-          const sourceHeightPixels = (remainingHeight * canvas.width) / imgWidth;
-          
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = sourceHeightPixels;
-          
-          // Fill with white background first
-          pageCtx.fillStyle = '#ffffff';
-          pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          
-          // Draw the content slice
-          pageCtx.drawImage(
-            canvas,
-            0, sourceYPixels,
-            canvas.width, sourceHeightPixels,
-            0, 0,
-            canvas.width, sourceHeightPixels
-          );
-          
-          const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
-          pdf.addImage(pageImgData, 'PNG', margin, margin, imgWidth, remainingHeight);
-        }
+    // Generate each page separately
+    for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+      if (pageNum > 0) {
+        pdf.addPage();
       }
+
+      // Calculate the viewport for this page
+      const startY = pageNum * pageHeightPx;
+      const endY = Math.min((pageNum + 1) * pageHeightPx, totalHeight);
+      const actualPageHeight = endY - startY;
+
+      // Create a container for just this page's content
+      const pageContainer = document.createElement('div');
+      pageContainer.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: ${contentWidth * 3.78}px;
+        height: ${actualPageHeight}px;
+        background: #fff;
+        overflow: hidden;
+      `;
+
+      // Clone the content again for this page
+      const pageClonedElement = clonedElement.cloneNode(true) as HTMLElement;
+      pageClonedElement.style.cssText = `
+        width: ${contentWidth * 3.78}px !important;
+        transform: translateY(-${startY}px);
+        overflow: visible !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        color: #000 !important;
+        background: #fff !important;
+      `;
+
+      pageContainer.appendChild(pageClonedElement);
+      document.body.appendChild(pageContainer);
+
+      try {
+        // Capture this page
+        const canvas = await html2canvas(pageContainer, {
+          scale: 3,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: contentWidth * 3.78,
+          height: actualPageHeight,
+          logging: false
+        });
+
+        // Add to PDF
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        const pdfHeight = (actualPageHeight * contentWidth) / (contentWidth * 3.78);
+        
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, pdfHeight);
+
+        console.log(`Page ${pageNum + 1}/${totalPages} rendered`);
+      } catch (pageError) {
+        console.error(`Error rendering page ${pageNum + 1}:`, pageError);
+      }
+
+      // Clean up this page's container
+      document.body.removeChild(pageContainer);
     }
+
+    // Clean up main container
+    document.body.removeChild(tempContainer);
 
     pdf.save('resume.pdf');
     console.log('PDF generated successfully');
