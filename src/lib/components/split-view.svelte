@@ -15,13 +15,11 @@
   import Resume from "$lib/components/resume.svelte";
   import { Book, Download, HardDriveDownloadIcon } from "lucide-svelte";
   
-  // Import libraries for client-side export
   import html2canvas from 'html2canvas';
   import jsPDF from 'jspdf';
-  // Remove the problematic html-to-docx import for now
   import fileSaver from 'file-saver';
-    import ChevronLeft from "@lucide/svelte/icons/chevron-left";
-    import ArrowLeft from "@lucide/svelte/icons/arrow-left";
+  import ChevronLeft from "@lucide/svelte/icons/chevron-left";
+  import ArrowLeft from "@lucide/svelte/icons/arrow-left";
   const { saveAs } = fileSaver;
 
   type Props = {
@@ -880,55 +878,13 @@ async function generatePDF(paperSize: string) {
   // Simplified DOCX generation using dynamic import to avoid circular dependency
 async function generateDOCX(paperSize: string) {
     try {
-      console.log('Generating DOCX...');
-      
-      // Dynamic import to avoid circular dependency issues
-      const { default: HTMLtoDOCX } = await import('html-to-docx');
-      
-      const resumeElement = document.querySelector('[data-resume-container]');
-      if (!resumeElement) {
-        throw new Error('Resume container not found');
-      }
-
-      // Get the HTML content with inline styles
-      const htmlContent = getResumeHTML();
-      
-      // Convert HTML to DOCX using html-to-docx with simplified options
-      const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
-        font: 'Arial',
-        fontSize: 11,
-        margins: {
-          top: 720,    // 0.5 inch in twips
-          right: 720,
-          bottom: 720,
-          left: 720
-        },
-        orientation: 'portrait',
-        // Add page size based on selection
-        ...(paperSize === 'A4' ? {
-          width: 11906,  // A4 width in twips
-          height: 16838  // A4 height in twips
-        } : {
-          width: 12240,  // Letter width in twips
-          height: 15840  // Letter height in twips
-        })
-      });
-
-      // Create blob and download
-      const blob = new Blob([docxBuffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
-      
-      saveAs(blob, 'resume.docx');
-      console.log('DOCX generated successfully');
-      downloadDialogOpen = false;
-      
+        throw new Error('no docx generation implemented');
     } catch (error) {
       console.error('DOCX generation failed:', error);
       
       // Show instructions UI instead of alert
       showDocxInstructions = true;
-    }
+    }s
   }
 
   // Handle going back from instructions
