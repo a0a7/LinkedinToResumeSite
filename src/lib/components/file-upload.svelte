@@ -38,7 +38,7 @@
 	};
 </script>
 
-<div class="container flex min-h-dvh items-center justify-center p-4">
+<div class="container flex items-center justify-center p-4">
 	<Card class="w-full max-w-md">
 		<CardHeader>
 			<CardTitle>Upload JSON File</CardTitle>
