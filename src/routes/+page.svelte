@@ -114,7 +114,7 @@
 <img 
     src="/img/clouds.png" 
     alt="Decorative clouds" 
-    class="pointer-events-none absolute bottom-0 left-0 right-0 transform translate-y-[40%] scale-150 -translate-x-[15rem] -hue-rotate-5 rotate-z-180 opacity-80 -z-10 w-full overflow-hidden overflow-x-hidden overflow-y-hidden"
+    class="pointer-events-none absolute bottom-0 left-0 right-0 transform translate-y-[40%] scale-150 -translate-x-[10%] -hue-rotate-5 rotate-z-180 opacity-80 -z-10 w-full overflow-hidden overflow-x-hidden overflow-y-hidden"
 />
 <img 
     src="/img/clouds.png" 
