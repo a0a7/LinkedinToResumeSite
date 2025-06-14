@@ -109,17 +109,22 @@
 			</div>
 		</div>
 	</main>
-
-	<!-- Upload Section -->
-	<section id="upload" class="bg-background text-foreground">
-		{#if !isFileUploaded}
-			<div transition:fade>
-				<FileUpload onUploadComplete={handleUploadComplete} />
-			</div>
-		{:else}
-			<div transition:fade>
-				<SplitView data={fileData} />
-			</div>
-		{/if}
-	</section>
 </div>
+<div class="pointer-events-none overflow-y-hidden overflow-x-hidden absolute w-full h-full top-0 left-0 right-0 -z-10">
+<img 
+    src="/img/clouds.png" 
+    alt="Decorative clouds" 
+    class="pointer-events-none absolute bottom-0 left-0 right-0 transform translate-y-[40%] scale-150 -translate-x-[15rem] -hue-rotate-5 rotate-z-180 opacity-80 -z-10 w-full overflow-hidden overflow-x-hidden overflow-y-hidden"
+/>
+<img 
+    src="/img/clouds.png" 
+    alt="Decorative clouds" 
+    class="pointer-events-none absolute bottom-0 left-0 right-0 transform translate-y-[55%] -z-10 w-full overflow-y-hidden"
+/>
+</div>
+
+<style>
+:global(Button) {
+	@apply cursor-pointer;
+}
+</style>
