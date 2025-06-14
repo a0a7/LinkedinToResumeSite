@@ -393,22 +393,22 @@ function toggleField(fieldPath: string) {
     editingFields = new Set(editingFields);
     editValues = new Map(editValues);
   }
-
   function saveEdit(fieldPath: string) {
     const newValue = editValues.get(fieldPath);
     if (newValue !== undefined) {
       const newData = { ...data };
       
-      // Handle nested field updates for languages and profiles
+      // Handle nested field updates for all sections
       const pathParts = fieldPath.split('.');
-      let obj = newData;
       
-      if (pathParts.length === 4 && pathParts[0] === 'languages') {
-        // Handle languages.index.field format
+      if (pathParts.length === 4) {
+        // Handle section.index.field format (e.g., work.0.position, education.1.institution)
+        const section = pathParts[0];
         const index = parseInt(pathParts[1]);
         const field = pathParts[2];
-        if (newData.languages && newData.languages[index]) {
-          newData.languages[index][field] = newValue;
+        
+        if (newData[section] && newData[section][index]) {
+          newData[section][index][field] = newValue;
         }
       } else if (pathParts.length === 3 && pathParts[0] === 'basics' && pathParts[1] === 'profiles') {
         // Handle basics.profiles.index format - update the URL
@@ -417,7 +417,8 @@ function toggleField(fieldPath: string) {
           newData.basics.profiles[index].url = newValue;
         }
       } else {
-        // Handle regular field updates
+        // Handle regular field updates (basics fields)
+        let obj = newData;
         for (let i = 0; i < pathParts.length - 1; i++) {
           obj = obj[pathParts[i]];
         }
@@ -635,9 +636,84 @@ function toggleField(fieldPath: string) {
   function canAddItems(sectionKey: string): boolean {
     return false; // Disable adding items for all sections
   }
-
   function isLanguageEditable(sectionKey: string): boolean {
     return sectionKey === 'languages';
+  }
+
+  // Get editable fields for each section type
+  function getEditableFields(sectionKey: string, item: any): Array<{key: string, label: string, value: any, type?: string}> {
+    switch (sectionKey) {
+      case 'work':
+      case 'volunteer':
+        return [
+          { key: 'name', label: sectionKey === 'work' ? 'Company' : 'Organization', value: item.name || item.organization },
+          { key: 'position', label: 'Position', value: item.position },
+          { key: 'startDate', label: 'Start Date', value: item.startDate, type: 'date' },
+          { key: 'endDate', label: 'End Date', value: item.endDate, type: 'date' },
+          { key: 'summary', label: 'Description', value: item.summary, type: 'textarea' },
+          { key: 'location', label: 'Location', value: item.location },
+          { key: 'url', label: 'Website', value: item.url }
+        ].filter(field => field.value !== undefined);
+      
+      case 'education':
+        return [
+          { key: 'institution', label: 'Institution', value: item.institution },
+          { key: 'area', label: 'Area of Study', value: item.area },
+          { key: 'studyType', label: 'Degree Type', value: item.studyType },
+          { key: 'startDate', label: 'Start Date', value: item.startDate, type: 'date' },
+          { key: 'endDate', label: 'End Date', value: item.endDate, type: 'date' },
+          { key: 'score', label: 'GPA/Score', value: item.score }
+        ].filter(field => field.value !== undefined && field.value !== '');
+      
+      case 'skills':
+        return [
+          { key: 'name', label: 'Skill', value: item.name },
+          { key: 'level', label: 'Level', value: item.level }
+        ].filter(field => field.value !== undefined && field.value !== '');
+      
+      case 'awards':
+        return [
+          { key: 'title', label: 'Title', value: item.title },
+          { key: 'date', label: 'Date', value: item.date, type: 'date' },
+          { key: 'awarder', label: 'Awarder', value: item.awarder },
+          { key: 'summary', label: 'Description', value: item.summary, type: 'textarea' }
+        ].filter(field => field.value !== undefined && field.value !== '');
+      
+      case 'certificates':
+        return [
+          { key: 'name', label: 'Certificate Name', value: item.name },
+          { key: 'issuer', label: 'Issuer', value: item.issuer },
+          { key: 'startDate', label: 'Issue Date', value: item.startDate, type: 'date' },
+          { key: 'url', label: 'Certificate URL', value: item.url }
+        ].filter(field => field.value !== undefined && field.value !== '');
+      
+      case 'publications':
+        return [
+          { key: 'name', label: 'Title', value: item.name },
+          { key: 'publisher', label: 'Publisher', value: item.publisher },
+          { key: 'releaseDate', label: 'Release Date', value: item.releaseDate, type: 'date' },
+          { key: 'summary', label: 'Summary', value: item.summary, type: 'textarea' },
+          { key: 'url', label: 'URL', value: item.url }
+        ].filter(field => field.value !== undefined && field.value !== '');
+      
+      case 'projects':
+        return [
+          { key: 'name', label: 'Project Name', value: item.name },
+          { key: 'description', label: 'Description', value: item.description, type: 'textarea' },
+          { key: 'startDate', label: 'Start Date', value: item.startDate, type: 'date' },
+          { key: 'endDate', label: 'End Date', value: item.endDate, type: 'date' },
+          { key: 'url', label: 'Project URL', value: item.url }
+        ].filter(field => field.value !== undefined && field.value !== '');
+      
+      case 'languages':
+        return [
+          { key: 'language', label: 'Language', value: item.language },
+          { key: 'fluency', label: 'Fluency', value: item.fluency }
+        ].filter(field => field.value !== undefined && field.value !== '');
+      
+      default:
+        return [];
+    }
   }
 
   // Helper function to get resume HTML with embedded styles
@@ -884,7 +960,7 @@ async function generateDOCX(paperSize: string) {
       
       // Show instructions UI instead of alert
       showDocxInstructions = true;
-    }s
+    }
   }
 
   // Handle going back from instructions
@@ -1263,12 +1339,91 @@ async function generateDOCX(paperSize: string) {
                           </button>
                         </div>
                       {/if}
+                    </div>                  {:else}
+                    <!-- Editable items for all other sections -->
+                    <div class="space-y-2">
+                      <Label for="{sectionKey}-{index}-{idSuffix}" class="text-xs font-semibold block mb-1">
+                        {formatItemLabel(item, sectionKey)}
+                      </Label>
+                      
+                      <!-- Render editable fields for this item -->
+                      <div class="pl-2 space-y-1">
+                        {#each getEditableFields(sectionKey, item) as field}
+                          <div class="space-y-1">
+                            <div class="flex items-center space-x-1">
+                              <Label class="text-xs font-medium text-gray-700 min-w-[60px]">{field.label}:</Label>
+                              <button 
+                                onclick={() => startEdit(`${sectionKey}.${index}.${field.key}`, field.value)}
+                                class="p-0.5 hover:bg-gray-100 rounded"
+                                title="Edit {field.label}"
+                              >
+                                <Pencil class="h-2.5 w-2.5" />
+                              </button>
+                            </div>
+                            
+                            {#if editingFields.has(`${sectionKey}.${index}.${field.key}`)}
+                              <div class="flex items-start space-x-1">
+                                {#if field.type === 'textarea'}
+                                  <textarea 
+                                    value={editValues.get(`${sectionKey}.${index}.${field.key}`) || field.value}
+                                    oninput={(e) => {
+                                      const target = e.target as HTMLTextAreaElement;
+                                      editValues.set(`${sectionKey}.${index}.${field.key}`, target.value);
+                                      editValues = new Map(editValues);
+                                    }}
+                                    onkeydown={(e) => {
+                                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                        e.preventDefault();
+                                        saveEdit(`${sectionKey}.${index}.${field.key}`);
+                                      } else if (e.key === 'Escape') {
+                                        e.preventDefault();
+                                        cancelEdit(`${sectionKey}.${index}.${field.key}`);
+                                      }
+                                    }}
+                                    class="text-xs border rounded px-2 py-1 flex-1 resize-y min-h-[60px]"
+                                    rows="3"
+                                  ></textarea>
+                                {:else}
+                                  <input 
+                                    type={field.type || 'text'}
+                                    value={editValues.get(`${sectionKey}.${index}.${field.key}`) || field.value}
+                                    oninput={(e) => {
+                                      const target = e.target as HTMLInputElement;
+                                      editValues.set(`${sectionKey}.${index}.${field.key}`, target.value);
+                                      editValues = new Map(editValues);
+                                    }}
+                                    onkeydown={(e) => handleKeydown(e, `${sectionKey}.${index}.${field.key}`)}
+                                    class="text-xs border rounded px-2 py-1 flex-1"
+                                  />
+                                {/if}
+                                <button 
+                                  onclick={() => saveEdit(`${sectionKey}.${index}.${field.key}`)}
+                                  class="p-0.5 hover:bg-green-100 rounded"
+                                  title="Save"
+                                >
+                                  <Check class="h-2.5 w-2.5 text-green-600" />
+                                </button>
+                                <button 
+                                  onclick={() => cancelEdit(`${sectionKey}.${index}.${field.key}`)}
+                                  class="p-0.5 hover:bg-red-100 rounded"
+                                  title="Cancel"
+                                >
+                                  <X class="h-2.5 w-2.5 text-red-600" />
+                                </button>
+                              </div>
+                            {:else}
+                              <div class="pl-2">
+                                {#if field.type === 'textarea'}
+                                  <p class="text-xs text-gray-600 whitespace-pre-wrap">{field.value}</p>
+                                {:else}
+                                  <p class="text-xs text-gray-600">{field.value}</p>
+                                {/if}
+                              </div>
+                            {/if}
+                          </div>
+                        {/each}
+                      </div>
                     </div>
-                  {:else}
-                    <!-- Non-editable items (skills, certificates, etc.) -->
-                    <Label for="{sectionKey}-{index}-{idSuffix}" class="text-xs font-medium">
-                      {formatItemLabel(item, sectionKey)}
-                    </Label>
                   {/if}
                 </div>
               </div>

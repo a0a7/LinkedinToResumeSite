@@ -1,0 +1,198 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
+  "basics": {
+    "name": "John Smith",
+    "label": "Computer Science Student",
+    "image": "",
+    "email": "john.smith@email.com",
+    "phone": "+1 (555) 123-4567",
+    "url": "https://github.com/johnsmith",
+    "summary": "Passionate computer science student with experience in machine learning and software development",
+    "location": {
+      "countryCode": "US",
+      "address": "United States"
+    },
+    "profiles": [
+      {
+        "network": "LinkedIn",
+        "username": "john-smith",
+        "url": "https://www.linkedin.com/in/john-smith/"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "University Research Lab",
+      "position": "Research Assistant",
+      "startDate": "2024-09-01",
+      "endDate": "2025-06-01",
+      "highlights": [],      "summary": "Led a machine learning project investigating deep learning approaches to handwritten text recognition.",
+      "url": "https://www.universityresearchlab.edu",
+      "location": "University Campus"
+    },
+    {
+      "name": "Tech Institute",
+      "position": "Summer Research Intern",
+      "startDate": "2023-06-01",
+      "endDate": "2023-08-01",
+      "highlights": [],      "summary": "Conducted independent research in materials engineering, investigating innovative polymer applications. Presented findings at regional conference.",
+      "url": "https://www.techinstitute.edu",
+      "location": "Research Center"
+    }
+  ],
+  "volunteer": [
+    {
+      "organization": "Community Education Center",
+      "position": "STEM Tutor & Camp Counselor",
+      "startDate": "2022-06-01",
+      "endDate": "2025-03-01",
+      "summary": "Taught and mentored middle school students in STEM subjects. Led science camps and organized educational activities.",      "highlights": [],
+      "url": "https://www.communityeducation.org"
+    }
+  ],
+  "education": [
+    {
+      "institution": "Metropolitan High School",
+      "area": "",
+      "studyType": "",
+      "startDate": "2021-09-01",
+      "endDate": "2025-06-01",
+      "score": "",
+      "courses": []
+    },
+    {
+      "institution": "Local Community College",
+      "area": "",
+      "studyType": "Dual Enrollment",
+      "startDate": "2023-09-01",
+      "endDate": "2025-06-01",
+      "score": "",
+      "courses": []
+    },
+    {
+      "institution": "State University",
+      "area": "",
+      "studyType": "Summer Program: Engineering Design",
+      "startDate": "2022-09-01",
+      "endDate": "2023-06-01",
+      "score": "",
+      "courses": []
+    }
+  ],
+  "awards": [
+    {
+      "title": "1st Place - Computer Science Category",
+      "date": "2025-03-01",
+      "awarder": "Regional Science Fair",
+      "summary": "State Qualifier & Competition Finalist"
+    },
+    {
+      "title": "Academic Excellence Scholarship",
+      "date": "2025-02-01",
+      "awarder": "Merit Scholarship Foundation",
+      "summary": ""
+    },
+    {
+      "title": "Honor Society Recognition",
+      "date": "2024-11-01",
+      "awarder": "National Academic Honor Society",
+      "summary": ""
+    },
+    {
+      "title": "Advanced Placement Scholar",
+      "date": "2024-07-01",
+      "awarder": "College Board",
+      "summary": ""
+    },
+    {
+      "title": "Language Proficiency Award",
+      "date": "2024-03-01",
+      "awarder": "World Language Association",
+      "summary": "Excellence in foreign language studies"
+    }
+  ],
+  "certificates": [
+    {
+      "name": "Python Programming Certification",      "issuer": "Programming Institute",
+      "startDate": "2024-01-01",
+      "url": "https://www.programminginstitute.com/certificates"
+    }
+  ],
+  "publications": [
+    {
+      "name": "Machine Learning Approaches to Text Recognition",
+      "publisher": "Student Research Journal",
+      "releaseDate": "2025-05-01",      "summary": "Research paper on neural network applications for handwritten text recognition systems.",
+      "url": "https://www.studentresearchjournal.com/papers/ml-text-recognition"
+    }
+  ],
+  "skills": [
+    {
+      "name": "Python",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Machine Learning",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Java",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "JavaScript",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "HTML/CSS",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Git Version Control",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Data Analysis",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Problem Solving",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Team Leadership",
+      "level": "",
+      "keywords": []
+    },
+    {
+      "name": "Public Speaking",
+      "level": "",
+      "keywords": []
+    }
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "fluency": "Native Speaker"
+    },
+    {
+      "fluency": "Conversational",
+      "language": "Spanish"
+    }
+  ],
+  "interests": [],
+  "references": [],
+  "projects": [],
+  "meta": {
+    "version": "v1.0.0",
+    "canonical": "https://github.com/jsonresume/resume-schema/blob/v1.0.0/schema.json"
+  }
+}

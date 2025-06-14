@@ -13,6 +13,8 @@
 	let fileData: any = $state(null);
 	// Track if user wants to go to upload section
 	let showUpload = $state(false);
+	// Track if split view should be shown
+	let showSplitView = $state(false);
 
 	/** Handle file upload completion */
 	const handleUploadComplete = (data: any) => {
@@ -36,16 +38,40 @@
 	/** Start from scratch with sample resume */
 	const startFromScratch = async () => {
 		try {
-			const response = await fetch('/Alexander_Weimer.resume.json');
+			// Load the anonymized sample resume data
+			const response = await fetch('/sample-resume.json');
+			if (!response.ok) {
+				throw new Error('Failed to load sample resume');
+			}
 			const sampleData = await response.json();
+			
+			// Set the resume data and show split view
 			fileData = sampleData;
 			isFileUploaded = true;
+			showSplitView = true;
 		} catch (error) {
-			console.error('Failed to load sample resume:', error);
+			console.error('Error loading sample resume:', error);
+			// If sample file doesn't exist, create basic empty resume structure
+			fileData = {
+				basics: {
+					name: "",
+					label: "",
+					email: "",
+					phone: "",
+					summary: ""
+				},
+				work: [],
+				education: [],
+				skills: [],
+				projects: []
+			};
+			isFileUploaded = true;
+			showSplitView = true;
 		}
 	};
 </script>
 
+{#if !showSplitView}
 <div class="min-h-dvh bg-gray-50 text-foreground">
 	<!-- Floating Navigation -->
 	<div class="fixed left-0 right-0 top-6 z-50 px-4">
@@ -122,9 +148,14 @@
     class="pointer-events-none absolute bottom-0 left-0 right-0 transform translate-y-[55%] -z-10 w-full overflow-y-hidden"
 />
 </div>
+{/if}
+
+{#if showSplitView}
+	<SplitView data={fileData} />
+{/if}
 
 <style>
 :global(Button) {
-	@apply cursor-pointer;
+	cursor: pointer;
 }
 </style>
