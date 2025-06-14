@@ -1,4 +1,4 @@
-# Source Repository for _[effortless.cv](https://effortless.cv)_ - the cleanest résumé builder
+# Source Repository for _[effortless.cv](https://effortless.cv)_
 ![preview](https://github.com/user-attachments/assets/74273e69-a342-40a5-93be-eee033c1cde8)
 
 ## Developing
