@@ -75,7 +75,7 @@
 	</div>
 
 	<!-- Hero Section -->
-	<main class="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 pt-16">
+	<main class="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4 pt-4">
 		<div class="text-center">
 			<!-- Beta Badge -->
 			<Badge variant="outline" class="mb-8 border-sky-200 bg-sky-50 text-sky-700">
